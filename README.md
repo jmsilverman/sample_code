@@ -5,6 +5,6 @@ A few pieces of sample code I have developed, organized into subfolders by langu
 Current languages:
 - Python
 - IDL (similar to R and MATLAB)
-- MySQL
+- PHP & MySQL
 
 Each subfolder has its own README file which describes a bit about what each code snippet does.
