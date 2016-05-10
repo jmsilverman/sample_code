@@ -1,4 +1,4 @@
-Over the last few years I have started working with Python and have a moderate skill level with it.
+Over the last few years I have sometimes coded in Python and have attained a moderate skill level with it.
 
 Programs in this folder include:
 
