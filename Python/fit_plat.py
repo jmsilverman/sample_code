@@ -5,8 +5,8 @@
 #
 
 import glob
-import numpy
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 
 # set up interactive plotting
@@ -29,7 +29,7 @@ for lc in lc_list:
     print lc
 
     # read-in LC
-    jd,mag,err = numpy.genfromtxt(lc,dtype=None,unpack=True)
+    jd,mag,err = np.genfromtxt(lc,dtype=None,unpack=True)
 
     # plot LC
     plt.plot(jd,mag,'ro')
@@ -48,7 +48,7 @@ for lc in lc_list:
     plt.plot(jd[cut],mag[cut],'bo')
     
     # get mean plateau mag
-    platmean = numpy.mean(mag[cut])
+    platmean = np.mean(mag[cut])
     plt.plot([min(jd),max(jd)],[platmean,platmean])
     print platmean
 
