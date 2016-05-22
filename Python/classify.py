@@ -33,8 +33,8 @@
 import time
 import glob
 import os
-import numpy
-from pylab import *
+import numpy as np
+import matplotlib.pyplot as plt
 
 def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_templates_default_plus_SDSS/'):
 
@@ -67,13 +67,13 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
         tot_spec+=1
 
         # read-in spectrum
-        wave,flux = numpy.genfromtxt(spectrum,comments='#',dtype=None,unpack=True)
+        wave,flux = np.genfromtxt(spectrum,comments='#',dtype=None,unpack=True)
 
         # DEPRECATED: SNID only if the median flux is greater than 0.5-sigma above zero
-        # if numpy.median(flux) > 0.5*numpy.std(flux):
+        # if np.median(flux) > 0.5*np.std(flux):
         #
 	# SNID only if mean flux is greater than 0.3
-	if numpy.mean(flux) > 0.3:
+	if np.mean(flux) > 0.3:
 
             # define min rlap
             rlapstring = 'rlapmin=5'                # default = 5
@@ -107,7 +107,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                     f.write(line)
                 f.close()
                 # save type fraction/redshift/age for SNID run 1
-                types1 = numpy.genfromtxt('temp0000', names=['sntype', 'ntemp', 'fraction', 'slope', 'avgsnidz',
+                types1 = np.genfromtxt('temp0000', names=['sntype', 'ntemp', 'fraction', 'slope', 'avgsnidz',
                                                             'avgsnidz_err', 'avgsnidage', 'avgsnidage_err'], 
                                          comments='#', dtype=None, unpack=True)
                 # save only lines with subtypes
@@ -117,7 +117,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
 
                 # get subtype with highest fraction and the fraction value 
                 highest_frac1 = max(types1['fraction'])
-                highest_index1 = numpy.argmax(types1['fraction'])
+                highest_index1 = np.argmax(types1['fraction'])
                 highest_type1 = types1['sntype'][highest_index1]
                 highest_z1 = types1['avgsnidz'][highest_index1]
                 #print highest_frac1
@@ -127,7 +127,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                 #raw_input("SNID run 1")
 
                 # save best matches of SNID run 1
-                best_matches1 = numpy.genfromtxt(snidfile, names=['number', 'snidsn', 'snidtype', 'lap', 'rlap', 'snidz', 
+                best_matches1 = np.genfromtxt(snidfile, names=['number', 'snidsn', 'snidtype', 'lap', 'rlap', 'snidz', 
                                                                   'snidz_err', 'snidage', 'snidage_flag', 'grade'], 
                                                  comments='#', skip_header=73, dtype=None, unpack=True, invalid_raise=False)
             
@@ -168,7 +168,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                     f.write(line)
                 f.close()
                 # save type fraction/redshift/age for SNID run 2
-                types2 = numpy.genfromtxt('temp0000', names=['sntype', 'ntemp', 'fraction', 'slope', 'avgsnidz',
+                types2 = np.genfromtxt('temp0000', names=['sntype', 'ntemp', 'fraction', 'slope', 'avgsnidz',
                                                             'avgsnidz_err', 'avgsnidage', 'avgsnidage_err'], 
                                          comments='#', dtype=None, unpack=True)
                 # save only lines with subtypes
@@ -178,7 +178,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
 
                 # get subtype with highest fraction and the fraction value 
                 highest_frac2 = max(types2['fraction'])
-                highest_index2 = numpy.argmax(types2['fraction'])
+                highest_index2 = np.argmax(types2['fraction'])
                 highest_type2 = types2['sntype'][highest_index2]
                 highest_z2 = types2['avgsnidz'][highest_index2]
                 #print highest_frac2
@@ -201,7 +201,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                     #print types2['fraction']
 
                     highest_frac2 = max(types2['fraction'])
-                    highest_index2 = numpy.argmax(types2['fraction'])
+                    highest_index2 = np.argmax(types2['fraction'])
                     highest_type2 = types2['sntype'][highest_index2]
                     highest_z2 = types2['avgsnidz'][highest_index2]
                     #print highest_frac2
@@ -217,7 +217,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                         keep_going = 0
 
                 # save best matches of SNID run 2
-                best_matches2 = numpy.genfromtxt(snidfile, names=['number', 'snidsn', 'snidtype', 'lap', 'rlap', 'snidz', 
+                best_matches2 = np.genfromtxt(snidfile, names=['number', 'snidsn', 'snidtype', 'lap', 'rlap', 'snidz', 
                                                                   'snidz_err', 'snidage', 'snidage_flag', 'grade'], 
                                                  comments='#', skip_header=73, dtype=None, unpack=True, invalid_raise=False)
             
@@ -275,9 +275,9 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                 # make a comparison plot of the data and best-matching template
                 #
                 # read-in data used by SNID
-                wave1,flux1 = numpy.genfromtxt(snidfile_noext+"_snidflux.dat",comments='#',dtype=None,unpack=True)
+                wave1,flux1 = np.genfromtxt(snidfile_noext+"_snidflux.dat",comments='#',dtype=None,unpack=True)
                 # convert NAN to zeros
-                flux1[isnan(flux1)] = 0.
+                flux1[np.isnan(flux1)] = 0.
 
                 # read-in best match
                 if bestnum > 9:
@@ -285,22 +285,22 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                 else:
                     compnum = '0'+str(bestnum)
                 bestmatchfile = snidfile_noext+"_comp00"+compnum+"_snidflux.dat"
-                wave2,flux2 = numpy.genfromtxt(bestmatchfile,comments='#',dtype=None,unpack=True)
+                wave2,flux2 = np.genfromtxt(bestmatchfile,comments='#',dtype=None,unpack=True)
                 # convert NAN to zeros
-                flux2[isnan(flux2)] = 0.
+                flux2[np.isnan(flux2)] = 0.
 
                 # plot data
-                plot(wave1,flux1,'k')
+                plt.plot(wave1,flux1,'k')
                 # plot template
-                plot(wave2,flux2,'r')
+                plt.plot(wave2,flux2,'r')
                 # make plot pretty
-                xlabel('Observed Wavelength (Ang.)')
-                ylabel('Relative Flux')
-                title(filename)
-                text(max(numpy.concatenate((wave1,wave2))),max(numpy.concatenate((flux1,flux2))),\
+                plt.xlabel('Observed Wavelength (Ang.)')
+                plt.ylabel('Relative Flux')
+                plt.title(filename)
+                plt.text(max(np.concatenate((wave1,wave2))),max(np.concatenate((flux1,flux2))),\
                          'rlap='+bestmatchSNID,horizontalalignment='right',verticalalignment='top')
-                savefig(snidfile_noext+".png")
-                clf()
+                plt.savefig(snidfile_noext+".png")
+                plt.clf()
                 good_spec+=1
 
                 # open, append, and close output file
