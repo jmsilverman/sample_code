@@ -193,7 +193,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                 
                 # make sure redshift is != 0
                 keep_going = 1
-                while ((highest_z2 < 0.001) and (keep_going == 1)):
+                while highest_z2 < 0.001 and keep_going == 1:
 
                     # if not, then find (sub)type with next-highest fraction
                     #print types2['fraction']
@@ -231,7 +231,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
                 bestmatchSNID2 = str(best_match2['rlap'])+'  '+best_match2['snidsn']+' ('+best_match2['snidtype']+') '+ \
                     str(best_match2['snidz'])+' ('+str(best_match2['snidz_err']) +') '+ str(best_match2['snidage'])+' ('+ \
                     str(types2['avgsnidage_err'][highest_index2])+') '
-                if (keep_going == 1):
+                if keep_going == 1:
                     rlap2 = best_match2['rlap']
                 else:
                     rlap2 = 0
@@ -239,7 +239,7 @@ def classify(in_dir='.', extension='.flm', tempdir='/home/ts3/jsilverman/SNID_te
 
 
             # make sure one of the 2 SNID runs was good
-            if ((rlap1+rlap2) > 0):
+            if rlap1+rlap2 > 0:
                 # compare SNID run 1 to run 2 and take match with higher rlap
                 if rlap1 > rlap2:
                     # save avg classification info for subtype with highest fraction
