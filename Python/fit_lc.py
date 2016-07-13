@@ -5,7 +5,7 @@
  fits the late-time decline of each LC with a line using either
     a starting point chosen by a user click or an inflection
     point from a modified logistic function fit to the entire LC
- saves the late-time slopes to a text file
+ saves the late-time slopes and uncertainties to a text file
 """
 
 # import stuff
@@ -15,7 +15,6 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from scipy.interpolate import interp1d
 
 # define linear function
 def line(x, a, b):
@@ -34,10 +33,92 @@ def funcprimeprime(x, a, b, c, d, e):
 
 # SNDB query code which will save SQL search output to local text
 #    files and then return a list of the text file filenames
-def query_sndb(dir):
-    #FIXME
+def query_sndb(lc_dir):
+    # import stuff for SNDB query
+    import sqlalchemy as sql
+    import getpass
+
+    # initialize list of filters to grab data of
+    filters = ['B','V','R','I','none']
+  
+    # initialize list of LC text files
     file_list = []
-    print 'in query_sndb()'
+
+    # ask for SNDB username
+    user = raw_input('Enter SNDB username: ')
+
+    # get password
+    pword = getpass.getpass('Enter SNDB password for user '+user+': ')
+    print
+    
+    # try to connect to SNDB server
+    try:
+        engine = sql.create_engine('mysql+pymysql://'+user+':'+pword+'@127.0.0.1:3307/sndb')
+        connection = engine.connect()
+        # use the (old) SNDB
+        result = connection.execute("use sndb")
+    except Exception, e:
+        # if failed
+        print >> sys.stderr, "Cannot connect to the SNDB, password might be wrong or maybe you need to open a SSH tunnel?"
+        print >> sys.stderr, "Exception: %s" % str(e)
+        sys.exit(1)
+
+    # initialize answer to query another object
+    ans = 'y'
+
+    # keep searching for objects
+    while ans.lower() != 'n':
+
+        # ask for an object name
+        obj = raw_input('Query SNDB for which object? ')
+
+        # go through each filter
+        for filt in filters:
+            # construct query
+            query = ('SELECT JD, Value, Error FROM photometry '
+                     'JOIN objects ON objects.ObjID = photometry.ObjID '
+                     'JOIN filters ON filters.FilterID = photometry.FilterID '
+                     'WHERE ObjName="'+obj+'" '
+                     'AND Filter="'+filt+'" '
+                     'ORDER BY JD')
+
+            # query SNDB
+            result = connection.execute(query)
+
+            # if there was data returned
+            if result.rowcount:
+                # keep Unfiltered LC file naming convention
+                if filt == 'none':
+                    filt = 'Unf'
+
+                # define new LC filename
+                filename = lc_dir+obj.lower().replace(' ','')+'.'+filt+'.sql'
+
+                # open new light curve file
+                f = open(filename, 'w')
+
+                # write returned photometry data to a text file
+                for row in result:                                                               
+                    f.write('{0:.2f}   {1:.5f}   {2:.5f}\n'.format(row['JD'],row['Value'],row['Error']))
+
+                # close the new light curve file
+                f.close()
+
+                # add new text file to list of files
+                file_list.append(filename)
+
+            # else, print a note saying no photometry found for obj
+            else:
+                print '***NO PHOTOMETRY FOUND in filter '+filt+' for '+obj
+
+        # ask to query another object
+        ans = raw_input('Query another object? (y/n) ')
+        print
+
+    # close connection to SNDB
+    connection.close()
+
+    # return list of newly created files
     return file_list
 
 
@@ -79,6 +160,10 @@ def main():
   if args:
     if args[0] == '--interactive':
       interactive = True
+  if not interactive:
+      # note that this only works for Type IIP supernova
+      print 'NOTE: This automated fitting routine only works for Type IIP supernova light curves.'
+      print
 
       
   # define output filename
@@ -102,7 +187,7 @@ def main():
     print obj+' '+filt
 
     
-    # read-in LC data
+    # read in LC data
     jd,mag,err = np.loadtxt(lc).T
     
     # convert to MJD
@@ -130,7 +215,7 @@ def main():
     if interactive:
 
       # ask for a click and don't timeout
-      print 'click once'
+      #print 'click once'
       [[x1,y1]] = plt.ginput(1, timeout=0)
       # plot clicked point
       #plt.plot(x1,y1,'mo')
@@ -147,8 +232,7 @@ def main():
     else:
       # define initial params for modified logistic function
       p0 = [60, 7, -1, (mag.min()+mag.max())/2., 0.01]
-      # hardcode initial params for a couple objects
-      
+
       # fit a function to the entire LC, w/ measurement errors if we have them
       if err.sum() != 0:
         params,cov = curve_fit(func, mjd_scaled, mag, p0=p0, bounds=([2.,1.,-4.,mag.min(),0.0005], [180.,15.,2.,mag.max(),0.3]), \
@@ -167,8 +251,7 @@ def main():
       inflec = xvals[spot]
       plt.plot(inflec,func(inflec, params[0], params[1], params[2], params[3], params[4]), 'm^', markersize=10)
       plt.plot([inflec,inflec], [mag.min()-1,mag.max()+1], 'm-', linewidth=1.5)
-      
-      
+
       # save data on the tail, beyond the last inflection point
       jd_tail = mjd_scaled[mjd_scaled > inflec]
       mag_tail = mag[mjd_scaled > inflec]
@@ -180,11 +263,11 @@ def main():
         err_tail = err[-2:]
         
       
+    # save first and last dates on the tail
+    endpoints = np.array([jd_tail[0], jd_tail[-1]])
+
     # highlight data on the tail (blue circles)
     plt.errorbar(jd_tail, mag_tail, yerr=err_tail, fmt='bs', markersize=7, label='Late-Time Data')
-
-    # save first and last data points on the tail
-    endpoints = np.array([jd_tail[0], jd_tail[-1]])
 
     # fit a line to the tail, w/ measurement errors if we have them
     if err_tail.sum() != 0:
@@ -242,7 +325,7 @@ def main():
     plt.show()
 
 
-    # save the linear fit's slope and error
+    # save the linear fit's slope and uncertainty
     f.write(obj+(9-len(obj))*' '+filt+(5-len(filt))*' '+'{0:.8f} {1:.8f}\n'.format(params[1],params_err[1]))
 
     # continue to next LC
